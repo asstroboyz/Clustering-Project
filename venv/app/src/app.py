@@ -248,6 +248,37 @@ table.dataframe {
 }
 </style>
 """, unsafe_allow_html=True)
+st.markdown("""
+<style>
+/* === Styling tombol download (CSV, Excel, dsb) === */
+div[data-testid="stDownloadButton"] > button {
+    background-color: #1d6e52 !important;  /* hijau elegan */
+    color: #ffffff !important;             /* teks putih */
+    border: none !important;
+    border-radius: 6px !important;
+    padding: 0.6rem 1.2rem !important;
+    font-weight: 500 !important;
+    font-size: 0.9rem !important;
+    transition: all 0.2s ease-in-out !important;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.1) !important;
+}
+
+/* Hover effect */
+div[data-testid="stDownloadButton"] > button:hover {
+    background-color: #145b3b !important;  /* sedikit lebih gelap */
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15) !important;
+}
+
+/* Saat tombol disabled (belum siap diunduh) */
+div[data-testid="stDownloadButton"] > button:disabled {
+    background-color: #ccc !important;
+    color: #666 !important;
+    cursor: not-allowed !important;
+    box-shadow: none !important;
+}
+</style>
+""", unsafe_allow_html=True)
 
 import pandas as pd
 from sklearn.cluster import KMeans
