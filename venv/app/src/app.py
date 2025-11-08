@@ -279,6 +279,64 @@ div[data-testid="stDownloadButton"] > button:disabled {
 }
 </style>
 """, unsafe_allow_html=True)
+st.markdown("""
+<style>
+/* === Styling elegan untuk komponen file uploader === */
+[data-testid="stFileUploader"] {
+    background-color: #ffffff !important; /* Putih bersih */
+    border: 2px dashed #1d6e52 !important; /* Hijau lembut */
+    border-radius: 12px !important;
+    padding: 1.5rem !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
+    transition: all 0.3s ease-in-out;
+}
+
+/* Hover effect */
+[data-testid="stFileUploader"]:hover {
+    border-color: #145b3b !important;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.1) !important;
+}
+
+/* === Warna tombol "Browse files" === */
+button[title="Browse files"],
+div[data-testid="stFileUploader"] button {
+    background-color: #1d6e52 !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 6px !important;
+    font-weight: 500 !important;
+    padding: 0.4rem 1.2rem !important;
+    transition: all 0.2s ease-in-out !important;
+}
+
+/* Hover tombol */
+button[title="Browse files"]:hover,
+div[data-testid="stFileUploader"] button:hover {
+    background-color: #145b3b !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15) !important;
+}
+
+/* === Teks drag and drop === */
+[data-testid="stFileUploaderDropzone"] div {
+    color: #1d6e52 !important;
+    font-weight: 500 !important;
+    font-size: 0.95rem !important;
+}
+
+/* Hilangkan warna hitam pekat area drop */
+[data-testid="stFileUploaderDropzone"] {
+    background-color: #f9fafb !important;
+}
+
+/* === Ikon cloud di tengah === */
+[data-testid="stFileUploaderIcon"] svg {
+    color: #1d6e52 !important;
+    width: 36px !important;
+    height: 36px !important;
+}
+</style>
+""", unsafe_allow_html=True)
 
 import pandas as pd
 from sklearn.cluster import KMeans
@@ -287,6 +345,7 @@ import matplotlib.pyplot as plt
 import io
 import time
 from io import BytesIO
+import os
 
 
 # Inisialisasi state untuk menandakan bahwa aplikasi baru saja dimulai
@@ -454,6 +513,71 @@ def input_data():
         df.to_csv("data/jenis_pakaian.csv", index=False)
         st.success("Data berhasil ditambahkan!")
 
+#Halaman Import
+def import_csv():
+    st.title("📦 Import Data CSV")
+    st.write(
+        "Unggah file CSV baru untuk menambahkan data ke dataset utama. "
+        "Jika label sudah ada, data lama akan **tetap dipertahankan**."
+    )
+
+    uploaded_file = st.file_uploader("Pilih file CSV", type=['csv'])
+
+    if uploaded_file is not None:
+        try:
+            new_data = pd.read_csv(uploaded_file, encoding='utf-8-sig')
+            new_data.columns = new_data.columns.str.strip().str.lower()
+
+            expected_cols = ['stok_awal', 'stok_akhir', 'terjual', 'label']
+            if not all(col in new_data.columns for col in expected_cols):
+                st.error(f"❌ Kolom CSV tidak sesuai. Kolom ditemukan: {new_data.columns.tolist()}")
+                return
+
+            # 🔹 Pastikan kolom angka bener-bener numerik
+            for col in ['stok_awal', 'stok_akhir', 'terjual']:
+                new_data[col] = pd.to_numeric(new_data[col], errors='coerce')
+
+            # 🔹 Tentukan lokasi file CSV utama (venv/app/data)
+            base_dir = os.path.dirname(__file__)
+            data_dir = os.path.join(base_dir, "../data")
+            os.makedirs(data_dir, exist_ok=True)
+            csv_path = os.path.join(data_dir, "jenis_pakaian.csv")
+
+            # 🔹 Baca dataset lama
+            try:
+                old_data = pd.read_csv(csv_path, encoding='utf-8-sig')
+            except FileNotFoundError:
+                old_data = pd.DataFrame(columns=expected_cols)
+
+            st.info(f"📊 Data lama: {len(old_data)} baris | Data baru: {len(new_data)} baris")
+
+            # 🔹 Tambahkan data baru TANPA mengganti yang lama (mode Skip)
+            combined_data = old_data.copy()
+            for _, row in new_data.iterrows():
+                label = row['label']
+                if label not in combined_data['label'].values:
+                    combined_data = pd.concat([combined_data, pd.DataFrame([row])], ignore_index=True)
+
+            # 🔹 Simpan hasil akhir (encoding benar)
+            combined_data.to_csv(csv_path, index=False, encoding='utf-8-sig')
+
+            # 🔹 Bersihkan cache dan refresh halaman
+            st.cache_data.clear()
+            st.success(f"✅ Import selesai! Total data sekarang: {len(combined_data)} baris.")
+            st.dataframe(combined_data.tail(10))
+
+            # 🔹 Auto balik ke Home
+            st.toast("📈 Data berhasil diimport! Halaman akan diperbarui...")
+            time.sleep(1.5)
+            st.session_state.page = "Home"
+            st.rerun()
+
+
+        except Exception as e:
+            st.error(f"❌ Gagal mengimpor file CSV: {e}")
+
+
+
 # Halaman Cetak Laporan
 def cetak_laporan():
     st.title("Cetak Laporan")
@@ -599,28 +723,26 @@ def kelola_data():
 
 def main():
     st.sidebar.title("Menu")
-    
-    # Inisialisasi state untuk menandakan bahwa aplikasi baru saja dimulai
-    if 'initialized' not in st.session_state:
-        st.session_state.initialized = True
+
+    home_page = st.sidebar.button("🏠 Home", key="home_btn")
+    kelola_data_page = st.sidebar.button("🧾 Kelola Data", key="kelola_btn")
+    input_data_page = st.sidebar.button("➕ Input Data", key="input_btn")
+    cetak_laporan_page = st.sidebar.button("📊 Cetak Laporan", key="laporan_btn")
+    import_csv_page = st.sidebar.button("📥 Import CSV", key="import_btn")  # 🟢 tambahin key unik
+
+    # Tentukan halaman aktif
+    if home_page:
         st.session_state.page = 'Home'
-    else:
-        home_page = st.sidebar.button("Home")
-        kelola_data_page = st.sidebar.button("Kelola Data")
-        input_data_page = st.sidebar.button("Input Data")
-        cetak_laporan_page = st.sidebar.button("Cetak Laporan")
+    elif kelola_data_page:
+        st.session_state.page = 'Kelola Data'
+    elif input_data_page:
+        st.session_state.page = 'Input Data'
+    elif cetak_laporan_page:
+        st.session_state.page = 'Cetak Laporan'
+    elif import_csv_page:
+        st.session_state.page = 'Import CSV'
 
-
-        if home_page:
-            st.session_state.page = 'Home'
-        elif kelola_data_page:
-            st.session_state.page = 'Kelola Data'
-        elif input_data_page:
-            st.session_state.page = 'Input Data'
-        elif cetak_laporan_page:
-            st.session_state.page = 'Cetak Laporan'
-
-    # Menampilkan halaman berdasarkan state
+    # Render halaman sesuai state
     if st.session_state.page == 'Home':
         home()
     elif st.session_state.page == 'Kelola Data':
@@ -629,6 +751,9 @@ def main():
         input_data()
     elif st.session_state.page == 'Cetak Laporan':
         cetak_laporan()
+    elif st.session_state.page == 'Import CSV':
+        import_csv()
+
 
 if __name__ == "__main__":
     main()

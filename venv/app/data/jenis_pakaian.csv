@@ -1,4 +1,4 @@
-stok_awal,stok_akhir,terjual,label
+﻿stok_awal,stok_akhir,terjual,label
 392.0,310.0,90.0,Baju Koko Al-Bagus tanggung
 400.0,320.0,80.0,Baju Koko Al-Bagus Polos
 300.0,228.0,72.0,Baju Batik Katun
@@ -19,3 +19,5 @@ stok_awal,stok_akhir,terjual,label
 600.0,408.0,192.0,Celana Twist blaksad
 240.0,168.0,72.0,Celana twist slimpit F4
 240.0,168.0,72.0,Celana twist Cafarana
+800.0,600.0,200.0,Bajuku
+200.0,150.0,50.0,Baju Pendek
