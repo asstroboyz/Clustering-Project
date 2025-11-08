@@ -1,0 +1,25 @@
+# Abaikan semua isi dalam folder venv
+venv/*
+
+# Tapi ijinkan folder app dan isinya
+!venv/app/
+!venv/app/**
+!venv/app/data/
+!venv/app/data/*.csv
+
+# Ijinkan file penting di root project
+!venv/readme.md
+!venv/requirements.txt
+!readme.md
+!requirements.txt
+
+# Abaikan cache dan temporary files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.DS_Store
+*.log
+*.tmp
+.streamlit/
+.vscode/
